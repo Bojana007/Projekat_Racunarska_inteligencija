@@ -1,2 +1,2 @@
-# Projekat_Racunarska-inteligencija
+# Projekat_Racunarska_inteligencija
 Adaptive Simulated Annealing project
