@@ -1,20 +1,14 @@
-
 clear all; clc; close all;
 
-%zadato nam je
+func_name = 'Schwefel';  
+
+[lb, ub, n, fobj] = get_function_details(func_name);
+
 T = 350;
 Tc = 0.993;
 Tmin = 0.1;
 
-n = 2;
-x_d = 0;
-x_g = 5;
-
-for i = 1:n
-    curr(i) = x_d + ( x_g - x_d ) .* rand();
-end
-
-[result] = fitness_function( curr, 2 );
+curr = lb + (ub - lb) .* rand(1, n);
 
 vec = [];
 
@@ -24,99 +18,61 @@ for i = 1:10
     Tc = 0.993;
     Tmin = 0.1;
 
-    [ curr, output, vektor ] = SA_4( curr, T, Tc, Tmin, n )
-
-    if output < -1.85
-        greska = curr
-    end
+    [curr, output, vektor] = SA_4(curr, T, Tc, Tmin, n, lb, ub, fobj);
 
     vec = [vec; output];
 end
 
 figure(1)
 plot(vec)
-yline(-1.8, 'r--') %minimum fje je -1.8
+title(['Simulated Annealing - ', func_name])
+yline(min(vec), 'r--')
+xlabel('Iteracija')
+ylabel('Najbolja fitnes vrednost')
 hold on;
+
 figure(2)
-boxplot( vec )
+boxplot(vec)
+title(['Distribucija rezultata - ', func_name])
 
+minimalno = min(vec)
+maximalno = max(vec)
+srednja_vr = mean(vec)
+sd = std(vec)
 
-minimalno = min( vec )
-maximalno = max( vec )
-srednja_vr = mean( vec )
-sd = std( vec )
+fprintf('\n*** Statistika za funkciju %s ***\n', func_name);
+fprintf('Minimalna vrednost: %.6f\n', minimalno);
+fprintf('Maksimalna vrednost: %.6f\n', maximalno);
+fprintf('Srednja vrednost:   %.6f\n', srednja_vr);
+fprintf('Standardna devijacija: %.6f\n', sd);
 
+function [curr, output, vektor] = SA_4(curr, T, Tc, Tmin, n, lb, ub, fobj)
 
-function[ result ] = fitness_function( curr, n )
-    
-    result = 0;
-
-    for i = 1:n
-        result = result + (( sin( curr(i) ) * ( sin( ( i*curr(i)^2 ) / pi ) )^20 ) );
-    end
-
-    result = -result;
-end
-
-
-function[ curr, output, vektor ] = SA_4( curr, T, Tc, Tmin, n )
-     
     vektor = [];
 
-    while( T > Tmin)
+    while (T > Tmin)
+
+        curr = max(curr, lb);
+        curr = min(curr, ub);
+
+        temp = curr + randn(1, n);
         
-        for i = 1:n
-            if curr(i) < 0  
-                curr(i) = 0;
-            elseif curr(i) > 5 
-                curr(i) = 5
-            end
-                
-        end
+        f_temp = fobj(temp);
+        f_curr = fobj(curr);
 
-       
-        %treba da generisemo novi par
-        for i = 1:n
-            temp(i) = curr(i) + randn;
-        end    
+        d_E = f_temp - f_curr;
 
-        %fitnes za privremeno resenje
-        [ f_temp ] = fitness_function( temp, n );
-        [ f_curr ] = fitness_function( curr, n );
-       
-        d_E =  f_temp - f_curr;
-    
-        if d_E < 0 
-            
+        if d_E < 0
             curr = temp;
-    
         else
-    
             r = rand;
-    
-            if r < exp( - d_E / T )
-                
+            if r < exp(-d_E / T)
                 curr = temp;
-                exp( - d_E / T )
-                 
             end
-    
         end
-    
+
         T = Tc * T;
-    
-        [ output ] = fitness_function( curr, n );
-
-       % vektor = [vektor, output];
-
-        
+        output = fobj(curr);
+        vektor = [vektor, output];
     end
-    
 end
-
-
-
-
-
-
-
